@@ -14,6 +14,7 @@ import {
   streamCommand,
   streamQuestion,
   clearHistory,
+  smoothed,
   type PaperInfo,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -43,7 +44,7 @@ export default function Home() {
   };
 
   const addMessage = useCallback((role: "user" | "assistant", content: string, isStreaming = false): string => {
-    const id = Date.now().toString();
+    const id = crypto.randomUUID();
     setMessages((prev) => [...prev, { id, role, content, isStreaming }]);
     return id;
   }, []);
@@ -71,11 +72,11 @@ export default function Home() {
 
     try {
       let content = "";
-      for await (const chunk of streamCommand({
+      for await (const chunk of smoothed(streamCommand({
         action: command,
         detail_level: detailLevel,
         provider,
-      })) {
+      }))) {
         content += chunk;
         updateMessage(assistantId, content, true);
       }
@@ -98,7 +99,7 @@ export default function Home() {
 
     try {
       let content = "";
-      for await (const chunk of streamQuestion(question, provider)) {
+      for await (const chunk of smoothed(streamQuestion(question, provider))) {
         content += chunk;
         updateMessage(assistantId, content, true);
       }
@@ -121,12 +122,12 @@ export default function Home() {
 
     try {
       let content = "";
-      for await (const chunk of streamCommand({
+      for await (const chunk of smoothed(streamCommand({
         action: "section",
         target: section,
         detail_level: detailLevel,
         provider,
-      })) {
+      }))) {
         content += chunk;
         updateMessage(assistantId, content, true);
       }
@@ -217,7 +218,7 @@ export default function Home() {
       </button>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <header className="border-b border-border p-4 flex items-center justify-between">
           <div>

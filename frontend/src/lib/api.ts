@@ -1,5 +1,50 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+export async function* smoothed(
+  stream: AsyncGenerator<string>,
+  opts: { baseCharsPerTick?: number; tickMs?: number } = {}
+): AsyncGenerator<string> {
+  const baseCharsPerTick = opts.baseCharsPerTick ?? 2;
+  const tickMs = opts.tickMs ?? 16;
+
+  let buffer = "";
+  let streamDone = false;
+  let streamError: unknown = null;
+
+  const pump = (async () => {
+    try {
+      for await (const chunk of stream) {
+        buffer += chunk;
+      }
+    } catch (e) {
+      streamError = e;
+    } finally {
+      streamDone = true;
+    }
+  })();
+
+  let position = 0;
+  while (!streamDone || position < buffer.length) {
+    const backlog = buffer.length - position;
+    if (backlog > 0) {
+      let chars: number;
+      if (streamDone) chars = Math.max(8, Math.ceil(backlog / 20));
+      else if (backlog > 200) chars = 10;
+      else if (backlog > 50) chars = 5;
+      else chars = baseCharsPerTick;
+
+      const nextPos = Math.min(position + chars, buffer.length);
+      const delta = buffer.slice(position, nextPos);
+      position = nextPos;
+      yield delta;
+    }
+    await new Promise((r) => setTimeout(r, tickMs));
+  }
+
+  await pump;
+  if (streamError) throw streamError;
+}
+
 export interface PaperInfo {
   title: string;
   authors: string[];

@@ -40,22 +40,27 @@ export function ChatMessage({ message }: ChatMessageProps) {
       </div>
       <div
         className={cn(
-          "flex-1 max-w-[85%]",
+          "min-w-0 max-w-[85%]",
           isUser ? "text-right" : "text-left"
         )}
       >
         <div
           className={cn(
-            "inline-block rounded-lg px-4 py-2",
+            "inline-block rounded-lg px-4 py-2 max-w-full overflow-hidden break-words",
             isUser
               ? "bg-primary text-primary-foreground"
               : "bg-card border border-border"
           )}
         >
           {isUser ? (
-            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+            <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
           ) : (
-            <div className={cn("prose prose-sm max-w-none", message.isStreaming && "typing-cursor")}>
+            <div
+              className={cn(
+                "prose prose-sm max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words prose-code:break-words",
+                message.isStreaming && "typing-cursor"
+              )}
+            >
               <ReactMarkdown>{message.content || "Thinking..."}</ReactMarkdown>
             </div>
           )}

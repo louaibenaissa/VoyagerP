@@ -95,7 +95,7 @@ Always base your responses on the actual content of the paper provided."""
         """Stream the response and accumulate for history."""
         full_response = ""
         
-        async for chunk in ai_provider.chat_completion(
+        async for chunk in await ai_provider.chat_completion(
             messages=self.conversation_history,
             provider=provider,
             stream=True,
